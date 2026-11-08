@@ -3,7 +3,7 @@
 Meant for a weekly measurement: run it, and put the output in a measurement log of your choice.
 
 Usage:
-  python orchestrator_log.py [--days 7] [--json] <transcript folder> [...]
+  python3 orchestrator_log.py [--days 7] [--json] <transcript folder> [...]
   Transcript folder = <home>/.claude/projects/<project-folder>/.
   --days 0 = no filter on modification date.
 

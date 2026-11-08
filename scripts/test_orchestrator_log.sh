@@ -4,7 +4,7 @@
 REPO=$(cd "$(dirname "$0")/.." && pwd)  # the checkout of this script, also in a worktree
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
-python -I - "$TMP" <<'EOF'
+python3 -I - "$TMP" <<'EOF'
 import json, sys, os
 d = sys.argv[1]
 def a(ctx, tools=(), text=""):
@@ -41,7 +41,7 @@ orch = [
  a(136000, [("Bash", {"command": "git merge-base --is-ancestor claude/z master"})]), r(),
  a(136000, [("mcp__ccd_session_mgmt__unarchive_session", {"session_id": "local_9"})]), r(),
  u("time for the round", "human"),
- a(137000, [("Bash", {"command": "python -I ~/.claude/scripts/cleanup_list.py /c/x --sessions s.json"})]), r(),
+ a(137000, [("Bash", {"command": "python3 -I ~/.claude/scripts/cleanup_list.py /c/x --sessions s.json"})]), r(),
  a(137000, [("mcp__ccd_session_mgmt__archive_session", {"session_id": "local_7"})]), r(),
  u(cross("W3 something: red"), "peer"),
  a(138000, [("mcp__ccd_session_mgmt__archive_session", {"session_id": "local_6"})]), r(),
@@ -57,10 +57,10 @@ for name, lines in (("orch.jsonl", orch), ("worker.jsonl", worker), ("searcher.j
     with open(os.path.join(d, name), "w", encoding="utf-8") as f:
         for x in lines: f.write(json.dumps(x) + "\n")
 EOF
-OUT=$(python -I "$REPO/scripts/orchestrator_log.py" --days 0 --json "$TMP")
+OUT=$(python3 -I "$REPO/scripts/orchestrator_log.py" --days 0 --json "$TMP")
 RED=0
 check() { # name, python expression on variable o (the json of the only orchestrator)
-  if python -I -c "import json,sys; d=json.loads(sys.argv[1]); o=d['orchestrators'][0]; sys.exit(0 if ($2) else 1)" "$OUT"; then echo "green  $1"; else echo "RED    $1"; RED=1; fi
+  if python3 -I -c "import json,sys; d=json.loads(sys.argv[1]); o=d['orchestrators'][0]; sys.exit(0 if ($2) else 1)" "$OUT"; then echo "green  $1"; else echo "RED    $1"; RED=1; fi
 }
 check "only the orchestrator counts" "len(d['orchestrators'])==1"
 check "ends as OLD" "o['old'] is True"
@@ -80,8 +80,8 @@ check "graph of the orchestrator: 1 query, 1 explain" "o['graph']=={'query': 1, 
 check "graph over all sessions: 2 of 3 read" "d['graph']['sessions']==3 and d['graph']['with_read']==2"
 check "graph totals: path and update separate, text does not count" "d['graph']=={'sessions': 3, 'with_read': 2, 'query': 1, 'explain': 1, 'path': 1, 'update': 1}"
 check "no text from the transcript in the output" "'belongs on the left' not in json.dumps(d)"
-python -I "$REPO/scripts/orchestrator_log.py" --days 0 "$TMP" | grep -q "Orchestrator test" && python -I "$REPO/scripts/orchestrator_log.py" --days 0 "$TMP" | grep -q "2 of 3 sessions read the graph" && echo "green  markdown block names the orchestrator" || { echo "RED    markdown block"; RED=1; }
-python -I "$REPO/scripts/orchestrator_log.py" --days 0 "$TMP" | grep -q "cleanup rounds 1" && echo "green  markdown block names cleanup rounds" || { echo "RED    cleanup rounds in block"; RED=1; }
+python3 -I "$REPO/scripts/orchestrator_log.py" --days 0 "$TMP" | grep -q "Orchestrator test" && python3 -I "$REPO/scripts/orchestrator_log.py" --days 0 "$TMP" | grep -q "2 of 3 sessions read the graph" && echo "green  markdown block names the orchestrator" || { echo "RED    markdown block"; RED=1; }
+python3 -I "$REPO/scripts/orchestrator_log.py" --days 0 "$TMP" | grep -q "cleanup rounds 1" && echo "green  markdown block names cleanup rounds" || { echo "RED    cleanup rounds in block"; RED=1; }
 printf '%s\n' '{"type":"custom-title","customTitle":"Orchestrator \ud83d emoji 🧠"}' > "$TMP/emoji.jsonl"
-python -I "$REPO/scripts/orchestrator_log.py" --days 0 "$TMP" >/dev/null 2>&1 && echo "green  lone surrogate in a title does not crash under -I" || { echo "RED    lone surrogate crashes"; RED=1; }
+python3 -I "$REPO/scripts/orchestrator_log.py" --days 0 "$TMP" >/dev/null 2>&1 && echo "green  lone surrogate in a title does not crash under -I" || { echo "RED    lone surrogate crashes"; RED=1; }
 exit $RED

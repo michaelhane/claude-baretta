@@ -5,7 +5,7 @@ Read only: the script runs only git read commands (status without optional locks
 and never carries anything out. It prints the commands; the orchestrator runs them.
 
 Usage:
-  python -I cleanup_list.py <main checkout> [--sessions <list_sessions.json>] [--count] [--limit 100]
+  python3 -I cleanup_list.py <main checkout> [--sessions <list_sessions.json>] [--count] [--limit 100]
   --sessions  output of list_sessions (a list or {"sessions": [...]}); without this file
               A, C and D stay empty and worktrees go to the list (live session unknown).
   --count     only the counts (for a weekly measurement).
@@ -331,7 +331,7 @@ def render(main, default, out_, rows):
 
 
 def main():
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # python -I on Windows: cp1252 and lone surrogates
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # python3 -I on Windows: cp1252 and lone surrogates
     ap = argparse.ArgumentParser()
     ap.add_argument("main_checkout")
     ap.add_argument("--sessions")

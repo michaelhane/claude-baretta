@@ -28,7 +28,7 @@ g "$H" worktree add -b wt-live "$TMP/wt-live" main
 g "$H" branch done-branch main
 g "$H" branch open-branch "$(git -C "$TMP/wt-own" rev-parse HEAD)"
 
-python -I - "$TMP" "$H" <<'EOF'
+python3 -I - "$TMP" "$H" <<'EOF'
 import json, sys
 tmp, h = sys.argv[1], sys.argv[2]
 def s(i, title, days, cwd=h, **kw):
@@ -71,10 +71,10 @@ S = [
 json.dump(S, open(tmp + "/sessions.json", "w", encoding="utf-8"))
 EOF
 
-OUT=$(python -I "$REPO/scripts/cleanup_list.py" "$H" --sessions "$TMP/sessions.json" --now 2026-11-10T12:00:00Z --active orch)
+OUT=$(python3 -I "$REPO/scripts/cleanup_list.py" "$H" --sessions "$TMP/sessions.json" --now 2026-11-10T12:00:00Z --active orch)
 RC=$?
-CNT=$(python -I "$REPO/scripts/cleanup_list.py" "$H" --sessions "$TMP/sessions.json" --now 2026-11-10T12:00:00Z --active orch --count)
-BARE=$(python -I "$REPO/scripts/cleanup_list.py" "$H" --now 2026-11-10T12:00:00Z --count)
+CNT=$(python3 -I "$REPO/scripts/cleanup_list.py" "$H" --sessions "$TMP/sessions.json" --now 2026-11-10T12:00:00Z --active orch --count)
+BARE=$(python3 -I "$REPO/scripts/cleanup_list.py" "$H" --now 2026-11-10T12:00:00Z --count)
 RED=0
 block() { echo "$OUT" | awk -v k="$1" '/^## /{f=(index($0, "## " k)==1)} f'; }
 check() { if eval "$2" >/dev/null 2>&1; then echo "green  $1"; else echo "RED    $1"; RED=1; fi; }
@@ -112,15 +112,15 @@ check "fallback keeps the title" "block C. | grep -q 'title=\"archive! app DONE 
 check "already renamed: candidate again, no double prefix" "block C. | grep -q '(already)' && ! echo \"\$OUT\" | grep -q 'archive! archive!' && ! echo \"\$OUT\" | grep -q 'session_id=already title='"
 check "already renamed with role title free: never a candidate" "! echo \"\$OUT\" | grep -q 'Reserve 11'"
 check "Worker with DONE does get renamed" "block C. | grep -q 'session_id=wdone title=\"archive! Worker 12'"
-check "role title never renamed (script)" "python -I -c \"import sys; sys.path.insert(0, r'$(mpad "$REPO")/scripts'); import cleanup_list as o; sys.exit(0 if all(map(o.role_title, ['Worker 3: x (myapp)', 'Reserve 4 (b, free)', 'Orchestrator b (active)', 'Secretary (b)'])) and not any(map(o.role_title, ['Worker 3: x - waiting for user', 'Worker 3: x DONE', 'OLD orchestrator b'])) else 1)\""
+check "role title never renamed (script)" "python3 -I -c \"import sys; sys.path.insert(0, r'$(mpad "$REPO")/scripts'); import cleanup_list as o; sys.exit(0 if all(map(o.role_title, ['Worker 3: x (myapp)', 'Reserve 4 (b, free)', 'Orchestrator b (active)', 'Secretary (b)'])) and not any(map(o.role_title, ['Worker 3: x - waiting for user', 'Worker 3: x DONE', 'OLD orchestrator b'])) else 1)\""
 check "role title in C: archive yes, rename no (render)" "block C. | grep -A5 '(odone)' | grep -q 'role title, never rename' && ! echo \"\$OUT\" | grep -q 'session_id=odone title='"
 check "already renamed: fallback says leave it" "block C. | grep -A5 '(already)' | grep -q 'already renamed; if archive_session refuses again, leave it'"
 check "no fallback in B, E or the list" "! block B. | grep -q set_session_title && ! block E. | grep -q set_session_title && ! block List | grep -q set_session_title"
 check "--count counts per class" "echo \"\$CNT\" | grep -q 'A 3, B 1, C 4, D 2, E 1' && echo \"\$CNT\" | grep -q 'worktrees 4 (merged 3, clean 2)'"
 check "without sessions: B to the list" "echo \"\$BARE\" | grep -q 'sessions ?' && echo \"\$BARE\" | grep -q 'B 0'"
-FRESH=$(python -I "$REPO/scripts/cleanup_list.py" "$H" --sessions "$TMP/sessions.json" --active orch)
+FRESH=$(python3 -I "$REPO/scripts/cleanup_list.py" "$H" --sessions "$TMP/sessions.json" --active orch)
 check "list: fresh worktree (< 1 day, maybe a bg worker) not in B" "echo \"\$FRESH\" | grep 'wt-clean' | grep -q 'fresh worktree' && ! echo \"\$FRESH\" | awk '/^## B/{f=1} /^## C/{f=0} f' | grep -q 'wt-clean'"
 check "read only: worktrees still exist" "[ \$(git -C '$H' worktree list | wc -l) = 5 ] && git -C '$H' rev-parse -q --verify done-branch"
 printf '%s\n' '[{"sessionId":"x","title":"OLD orchestrator \ud83d broken","cwd":"'"$(mpad "$H")"'","lastActivityAt":"2026-11-01T00:00:00Z"}]' > "$TMP/emoji.json"
-check "lone surrogate in a title does not crash under -I" "python -I '$REPO/scripts/cleanup_list.py' '$H' --sessions '$TMP/emoji.json' --now 2026-11-10T12:00:00Z | grep -q 'broken'"
+check "lone surrogate in a title does not crash under -I" "python3 -I '$REPO/scripts/cleanup_list.py' '$H' --sessions '$TMP/emoji.json' --now 2026-11-10T12:00:00Z | grep -q 'broken'"
 exit $RED
